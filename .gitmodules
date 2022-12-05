@@ -1,6 +1,4 @@
 [submodule "rtmidi"]
 	path = rtmidi
 	url = https://github.com/thestk/rtmidi.git
-[submodule "cxxopts"]
-	path = cxxopts
-	url = https://github.com/jarro2783/cxxopts
+

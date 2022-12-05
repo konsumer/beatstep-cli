@@ -18,7 +18,13 @@ class BeatStep {
     void list () {
       unsigned int nPorts = this->midiout->getPortCount();
       std::string portName;
-      std::cout << "\nThere are " << nPorts << " MIDI output ports available.\n";
+      
+      if (nPorts == 1) {
+        std::cout << "\nThere is 1 MIDI output port available:\n";
+      } else {
+        std::cout << "\nThere are " << nPorts << " MIDI output ports available:\n";
+      }
+
       for ( unsigned int i=0; i<nPorts; i++ ) {
         try {
           portName = this->midiout->getPortName(i);
@@ -27,10 +33,12 @@ class BeatStep {
           error.printMessage();
           return;
         }
-        std::cout << "\t#" << i+1 << ": " << portName << '\n';
+        std::cout << '\t' << i+1 << ": " << portName << '\n';
       }
+      
       std::cout << '\n';
     }
+
   private:
     RtMidiOut *midiout;
 };

@@ -7,6 +7,9 @@ include_directories (src)
 
 find_package(RtMidi REQUIRED)
 
+add_subdirectory(cxxopts)
+
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} PRIVATE RtMidi::rtmidi)
+target_include_directories(${PROJECT_NAME} PUBLIC cxxopts)
+target_link_libraries(${PROJECT_NAME} PUBLIC cxxopts RtMidi::rtmidi)
