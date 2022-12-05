@@ -1,4 +1,5 @@
 #include "RtMidi.h"
+#include <vector>
 
 class BeatStep {
   public:
@@ -15,6 +16,7 @@ class BeatStep {
       delete this->midiout;
     }
 
+    // get a list of MIDI devices
     void list () {
       unsigned int nPorts = this->midiout->getPortCount();
       std::string portName;
@@ -39,6 +41,21 @@ class BeatStep {
       std::cout << '\n';
     }
 
+    // update firmware
+    int updateFirmware(int device, std::string filename){
+      return 0;
+    }
+
+    // save prest
+    int saveBeatstep(int device, std::string filename){
+      return 0;
+    }
+
+
+    // load prest
+    int loadBeatstep(int device, std::string filename){
+      return 0;
+    }
   private:
     RtMidiOut *midiout;
 };

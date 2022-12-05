@@ -1,28 +1,13 @@
 #include <iostream>
 #include <cstdlib>
 #include "BeatStep.hpp"
+#include <fstream>
+#include <iterator>
+#include <vector>
 
 #include "CLI/App.hpp"
 #include "CLI/Formatter.hpp"
 #include "CLI/Config.hpp"
-
-void listDevices(){
-  BeatStep* bs = new BeatStep();
-  bs->list();
-  delete bs;
-}
-
-int loadBeatstep(int device, std::string filename) {
-  return 0;
-}
-
-int saveBeatstep(int device, std::string filename) {
-  return 0;
-}
-
-int updateFirmware(int device, std::string filename) {
-  return 0;
-}
 
 int main(int argc, char *argv[]) {
   CLI::App app{"Use sysex to control BeatStep"};
@@ -32,9 +17,8 @@ int main(int argc, char *argv[]) {
   std::string filename;
 
   auto subList = app.add_subcommand("list", "List available MIDI devices");
-  subList->final_callback(listDevices);
   
-  auto subLoad = app.add_subcommand("load", "Load a .beatstep preset file into device");
+  auto subLoad = app.add_subcommand("load", "Load a .beatstep preset file on device");
   subLoad->add_option("-d,--device", device, "The device to use (see list)");
   subLoad->add_option("file", filename, "The .beatstep file")->required();
 
@@ -48,15 +32,23 @@ int main(int argc, char *argv[]) {
 
   CLI11_PARSE(app, argc, argv);
 
+  BeatStep* bs = new BeatStep();
+
+  if (app.got_subcommand(subList)) {
+    bs->list();
+    return 0;
+  }
+
+  int n = 0;
+
   if (app.got_subcommand(subLoad)) {
-    return loadBeatstep(device, filename);
+    n = bs->loadBeatstep(device, filename);
+  }else if (app.got_subcommand(subSave)) {
+    n = bs->saveBeatstep(device, filename);
+  }else if (app.got_subcommand(subUpdate)) {
+    n = bs->updateFirmware(device, filename);
   }
 
-  if (app.got_subcommand(subSave)) {
-    return saveBeatstep(device, filename);
-  }
-
-  if (app.got_subcommand(subUpdate)) {
-    return updateFirmware(device, filename);
-  }
+  delete bs;
+  return n;
 }
