@@ -7,9 +7,14 @@ include_directories (src)
 
 find_package(RtMidi REQUIRED)
 
-add_subdirectory(cxxopts)
+include(FetchContent)
+FetchContent_Declare(
+  cli11
+  GIT_REPOSITORY https://github.com/CLIUtils/CLI11
+  GIT_TAG        v2.2.0
+)
+FetchContent_MakeAvailable(cli11)
 
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_include_directories(${PROJECT_NAME} PUBLIC cxxopts)
-target_link_libraries(${PROJECT_NAME} PUBLIC cxxopts RtMidi::rtmidi)
+target_link_libraries(${PROJECT_NAME} PUBLIC CLI11::CLI11 RtMidi::rtmidi)
