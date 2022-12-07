@@ -4,7 +4,7 @@
 #include <iterator>
 #include <json.hpp>
 
-using json = nlohmann::json;
+using json = nlohmann::ordered_json;
 
 // Platform-dependent sleep routines.
 #if defined(WIN32)
@@ -142,7 +142,7 @@ class BeatStep {
     }
 
     // set a beatstep param
-    void set (unsigned char pp, unsigned char cc, unsigned char vv) {
+    void set (unsigned char cc, unsigned char pp, unsigned char vv) {
       std::vector<unsigned char> message = {0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x02, 0x00, pp, cc, vv, 0xF7};
       this->midiout->sendMessage(&message);
       SLEEP(1);
@@ -223,7 +223,7 @@ class BeatStep {
           message[9] == cc &&
           message[11] == 0xF7
         ) {
-          // std::cout << (int)cc << '_' << (int)pp << '=' << (int)message[10] << '\n';
+          // std::cout << (int)cc << '_' << (int)pp << '=' << (int)message[10] << std::endl;
           return message[10];
         }
         if (tryCount > 10) {
@@ -237,85 +237,356 @@ class BeatStep {
       unsigned char cc = 0x20;
       unsigned char pp = 0x01;
 
-      json out = {
+      json j = {
         { "device", "BeatStep" }
       };
       
       for (cc = 0x20; cc < 0x31; cc++) {
         for (pp = 0x01; pp < 0x07; pp++) {
-          out[std::to_string(cc) + "_" + std::to_string(pp)] = this->get(cc, pp);
+          j[std::to_string(cc) + "_" + std::to_string(pp)] = this->get(cc, pp);
         }
       }
 
       for (cc = 0x58; cc < 0x60; cc++) {
         for (pp = 0x01; pp < 0x07; pp++) {
-          out[std::to_string(cc) + "_" + std::to_string(pp)] = this->get(cc, pp);
+          j[std::to_string(cc) + "_" + std::to_string(pp)] = this->get(cc, pp);
         }
       }
 
       for (cc = 0x70; cc < 0x80; cc++) {
         for (pp = 0x01; pp < 0x07; pp++) {
-          out[std::to_string(cc) + "_" + std::to_string(pp)] = this->get(cc, pp);
+          j[std::to_string(cc) + "_" + std::to_string(pp)] = this->get(cc, pp);
         }
       }
 
       // TODO: this would be nicer in a loop
-      out["global_" + std::to_string(0x00) + "_" + std::to_string(0x52)] = this->get(0x00, 0x52);
-      out["global_" + std::to_string(0x00) + "_" + std::to_string(0x53)] = this->get(0x00, 0x53);
-      out["global_" + std::to_string(0x01) + "_" + std::to_string(0x50)] = this->get(0x01, 0x50);
-      out["global_" + std::to_string(0x01) + "_" + std::to_string(0x52)] = this->get(0x01, 0x52);
-      out["global_" + std::to_string(0x01) + "_" + std::to_string(0x53)] = this->get(0x01, 0x53);
-      out["global_" + std::to_string(0x02) + "_" + std::to_string(0x50)] = this->get(0x02, 0x50);
-      out["global_" + std::to_string(0x02) + "_" + std::to_string(0x52)] = this->get(0x02, 0x52);
-      out["global_" + std::to_string(0x02) + "_" + std::to_string(0x53)] = this->get(0x02, 0x53);
-      out["global_" + std::to_string(0x03) + "_" + std::to_string(0x41)] = this->get(0x03, 0x41);
-      out["global_" + std::to_string(0x03) + "_" + std::to_string(0x50)] = this->get(0x03, 0x50);
-      out["global_" + std::to_string(0x03) + "_" + std::to_string(0x52)] = this->get(0x03, 0x52);
-      out["global_" + std::to_string(0x03) + "_" + std::to_string(0x53)] = this->get(0x03, 0x53);
-      out["global_" + std::to_string(0x04) + "_" + std::to_string(0x41)] = this->get(0x04, 0x41);
-      out["global_" + std::to_string(0x04) + "_" + std::to_string(0x50)] = this->get(0x04, 0x50);
-      out["global_" + std::to_string(0x04) + "_" + std::to_string(0x52)] = this->get(0x04, 0x52);
-      out["global_" + std::to_string(0x04) + "_" + std::to_string(0x53)] = this->get(0x04, 0x53);
-      out["global_" + std::to_string(0x05) + "_" + std::to_string(0x50)] = this->get(0x05, 0x50);
-      out["global_" + std::to_string(0x05) + "_" + std::to_string(0x52)] = this->get(0x05, 0x52);
-      out["global_" + std::to_string(0x05) + "_" + std::to_string(0x53)] = this->get(0x05, 0x53);
-      out["global_" + std::to_string(0x06) + "_" + std::to_string(0x40)] = this->get(0x06, 0x40);
-      out["global_" + std::to_string(0x06) + "_" + std::to_string(0x50)] = this->get(0x06, 0x50);
-      out["global_" + std::to_string(0x06) + "_" + std::to_string(0x52)] = this->get(0x06, 0x52);
-      out["global_" + std::to_string(0x06) + "_" + std::to_string(0x53)] = this->get(0x06, 0x53);
-      out["global_" + std::to_string(0x07) + "_" + std::to_string(0x50)] = this->get(0x07, 0x50);
-      out["global_" + std::to_string(0x07) + "_" + std::to_string(0x52)] = this->get(0x07, 0x52);
-      out["global_" + std::to_string(0x07) + "_" + std::to_string(0x53)] = this->get(0x07, 0x53);
-      out["global_" + std::to_string(0x08) + "_" + std::to_string(0x50)] = this->get(0x08, 0x50);
-      out["global_" + std::to_string(0x08) + "_" + std::to_string(0x52)] = this->get(0x08, 0x52);
-      out["global_" + std::to_string(0x08) + "_" + std::to_string(0x53)] = this->get(0x08, 0x53);
-      out["global_" + std::to_string(0x09) + "_" + std::to_string(0x50)] = this->get(0x09, 0x50);
-      out["global_" + std::to_string(0x09) + "_" + std::to_string(0x52)] = this->get(0x09, 0x52);
-      out["global_" + std::to_string(0x09) + "_" + std::to_string(0x53)] = this->get(0x09, 0x53);
-      out["global_" + std::to_string(0x0A) + "_" + std::to_string(0x50)] = this->get(0x0A, 0x50);
-      out["global_" + std::to_string(0x0A) + "_" + std::to_string(0x52)] = this->get(0x0A, 0x52);
-      out["global_" + std::to_string(0x0A) + "_" + std::to_string(0x53)] = this->get(0x0A, 0x53);
-      out["global_" + std::to_string(0x0B) + "_" + std::to_string(0x50)] = this->get(0x0B, 0x50);
-      out["global_" + std::to_string(0x0B) + "_" + std::to_string(0x52)] = this->get(0x0B, 0x52);
-      out["global_" + std::to_string(0x0B) + "_" + std::to_string(0x53)] = this->get(0x0B, 0x53);
-      out["global_" + std::to_string(0x0C) + "_" + std::to_string(0x50)] = this->get(0x0C, 0x50);
-      out["global_" + std::to_string(0x0C) + "_" + std::to_string(0x52)] = this->get(0x0C, 0x52);
-      out["global_" + std::to_string(0x0C) + "_" + std::to_string(0x53)] = this->get(0x0C, 0x53);
-      out["global_" + std::to_string(0x0D) + "_" + std::to_string(0x52)] = this->get(0x0D, 0x52);
-      out["global_" + std::to_string(0x0D) + "_" + std::to_string(0x53)] = this->get(0x0D, 0x53);
-      out["global_" + std::to_string(0x0E) + "_" + std::to_string(0x52)] = this->get(0x0E, 0x52);
-      out["global_" + std::to_string(0x0E) + "_" + std::to_string(0x53)] = this->get(0x0E, 0x53);
-      out["global_" + std::to_string(0x0F) + "_" + std::to_string(0x52)] = this->get(0x0F, 0x52);
-      out["global_" + std::to_string(0x0F) + "_" + std::to_string(0x53)] = this->get(0x0F, 0x53);
+      j["global_" + std::to_string(0x00) + "_" + std::to_string(0x52)] = this->get(0x00, 0x52);
+      j["global_" + std::to_string(0x00) + "_" + std::to_string(0x53)] = this->get(0x00, 0x53);
+      j["global_" + std::to_string(0x01) + "_" + std::to_string(0x50)] = this->get(0x01, 0x50);
+      j["global_" + std::to_string(0x01) + "_" + std::to_string(0x52)] = this->get(0x01, 0x52);
+      j["global_" + std::to_string(0x01) + "_" + std::to_string(0x53)] = this->get(0x01, 0x53);
+      j["global_" + std::to_string(0x02) + "_" + std::to_string(0x50)] = this->get(0x02, 0x50);
+      j["global_" + std::to_string(0x02) + "_" + std::to_string(0x52)] = this->get(0x02, 0x52);
+      j["global_" + std::to_string(0x02) + "_" + std::to_string(0x53)] = this->get(0x02, 0x53);
+      j["global_" + std::to_string(0x03) + "_" + std::to_string(0x41)] = this->get(0x03, 0x41);
+      j["global_" + std::to_string(0x03) + "_" + std::to_string(0x50)] = this->get(0x03, 0x50);
+      j["global_" + std::to_string(0x03) + "_" + std::to_string(0x52)] = this->get(0x03, 0x52);
+      j["global_" + std::to_string(0x03) + "_" + std::to_string(0x53)] = this->get(0x03, 0x53);
+      j["global_" + std::to_string(0x04) + "_" + std::to_string(0x41)] = this->get(0x04, 0x41);
+      j["global_" + std::to_string(0x04) + "_" + std::to_string(0x50)] = this->get(0x04, 0x50);
+      j["global_" + std::to_string(0x04) + "_" + std::to_string(0x52)] = this->get(0x04, 0x52);
+      j["global_" + std::to_string(0x04) + "_" + std::to_string(0x53)] = this->get(0x04, 0x53);
+      j["global_" + std::to_string(0x05) + "_" + std::to_string(0x50)] = this->get(0x05, 0x50);
+      j["global_" + std::to_string(0x05) + "_" + std::to_string(0x52)] = this->get(0x05, 0x52);
+      j["global_" + std::to_string(0x05) + "_" + std::to_string(0x53)] = this->get(0x05, 0x53);
+      j["global_" + std::to_string(0x06) + "_" + std::to_string(0x40)] = this->get(0x06, 0x40);
+      j["global_" + std::to_string(0x06) + "_" + std::to_string(0x50)] = this->get(0x06, 0x50);
+      j["global_" + std::to_string(0x06) + "_" + std::to_string(0x52)] = this->get(0x06, 0x52);
+      j["global_" + std::to_string(0x06) + "_" + std::to_string(0x53)] = this->get(0x06, 0x53);
+      j["global_" + std::to_string(0x07) + "_" + std::to_string(0x50)] = this->get(0x07, 0x50);
+      j["global_" + std::to_string(0x07) + "_" + std::to_string(0x52)] = this->get(0x07, 0x52);
+      j["global_" + std::to_string(0x07) + "_" + std::to_string(0x53)] = this->get(0x07, 0x53);
+      j["global_" + std::to_string(0x08) + "_" + std::to_string(0x50)] = this->get(0x08, 0x50);
+      j["global_" + std::to_string(0x08) + "_" + std::to_string(0x52)] = this->get(0x08, 0x52);
+      j["global_" + std::to_string(0x08) + "_" + std::to_string(0x53)] = this->get(0x08, 0x53);
+      j["global_" + std::to_string(0x09) + "_" + std::to_string(0x50)] = this->get(0x09, 0x50);
+      j["global_" + std::to_string(0x09) + "_" + std::to_string(0x52)] = this->get(0x09, 0x52);
+      j["global_" + std::to_string(0x09) + "_" + std::to_string(0x53)] = this->get(0x09, 0x53);
+      j["global_" + std::to_string(0x0A) + "_" + std::to_string(0x50)] = this->get(0x0A, 0x50);
+      j["global_" + std::to_string(0x0A) + "_" + std::to_string(0x52)] = this->get(0x0A, 0x52);
+      j["global_" + std::to_string(0x0A) + "_" + std::to_string(0x53)] = this->get(0x0A, 0x53);
+      j["global_" + std::to_string(0x0B) + "_" + std::to_string(0x50)] = this->get(0x0B, 0x50);
+      j["global_" + std::to_string(0x0B) + "_" + std::to_string(0x52)] = this->get(0x0B, 0x52);
+      j["global_" + std::to_string(0x0B) + "_" + std::to_string(0x53)] = this->get(0x0B, 0x53);
+      j["global_" + std::to_string(0x0C) + "_" + std::to_string(0x50)] = this->get(0x0C, 0x50);
+      j["global_" + std::to_string(0x0C) + "_" + std::to_string(0x52)] = this->get(0x0C, 0x52);
+      j["global_" + std::to_string(0x0C) + "_" + std::to_string(0x53)] = this->get(0x0C, 0x53);
+      j["global_" + std::to_string(0x0D) + "_" + std::to_string(0x52)] = this->get(0x0D, 0x52);
+      j["global_" + std::to_string(0x0D) + "_" + std::to_string(0x53)] = this->get(0x0D, 0x53);
+      j["global_" + std::to_string(0x0E) + "_" + std::to_string(0x52)] = this->get(0x0E, 0x52);
+      j["global_" + std::to_string(0x0E) + "_" + std::to_string(0x53)] = this->get(0x0E, 0x53);
+      j["global_" + std::to_string(0x0F) + "_" + std::to_string(0x52)] = this->get(0x0F, 0x52);
+      j["global_" + std::to_string(0x0F) + "_" + std::to_string(0x53)] = this->get(0x0F, 0x53);
 
       std::ofstream o(filename);
-      o << std::setw(2) << out << std::endl;
+      o << std::setw(2) << j << std::endl;
 
       return true;
     }
 
     // load preset
     bool loadPreset (std::string filename){
+      std::ifstream i(filename);
+      json j;
+      i >> j;
+
+      std::string k;
+      unsigned char cc = 0x20;
+      unsigned char pp = 0x01;
+
+      for (cc = 0x20; cc < 0x31; cc++) {
+        for (pp = 0x01; pp < 0x07; pp++) {
+          k = std::to_string(cc) + "_" + std::to_string(pp);
+          if (j.contains(k)) {
+            this->set(cc, pp, j[k]);
+          }
+        }
+      }
+
+      for (cc = 0x58; cc < 0x60; cc++) {
+        for (pp = 0x01; pp < 0x07; pp++) {
+          k = std::to_string(cc) + "_" + std::to_string(pp);
+          if (j.contains(k)) {
+            this->set(cc, pp, j[k]);
+          }
+        }
+      }
+
+      for (cc = 0x70; cc < 0x80; cc++) {
+        for (pp = 0x01; pp < 0x07; pp++) {
+          k = std::to_string(cc) + "_" + std::to_string(pp);
+          if (j.contains(k)) {
+            this->set(cc, pp, j[k]);
+          }
+        }
+      }
+
+      // TODO: this would be nicer in a loop
+      k = "global_" + std::to_string(0x00) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x00, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x00) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x00, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x01) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x01, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x01) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x01, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x01) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x01, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x02) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x02, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x02) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x02, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x02) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x02, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x03) + "_" + std::to_string(0x41);
+      if (j.contains(k)) {
+        this->set(0x03, 0x41, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x03) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x03, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x03) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x03, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x03) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x03, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x04) + "_" + std::to_string(0x41);
+      if (j.contains(k)) {
+        this->set(0x04, 0x41, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x04) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x04, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x04) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x04, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x04) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x04, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x05) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x05, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x05) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x05, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x05) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x05, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x06) + "_" + std::to_string(0x40);
+      if (j.contains(k)) {
+        this->set(0x06, 0x40, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x06) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x06, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x06) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x06, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x06) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x06, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x07) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x07, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x07) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x07, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x07) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x07, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x08) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x08, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x08) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x08, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x08) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x08, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x09) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x09, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x09) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x09, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x09) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x09, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0A) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x0A, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0A) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x0A, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0A) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x0A, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0B) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x0B, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0B) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x0B, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0B) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x0B, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0C) + "_" + std::to_string(0x50);
+      if (j.contains(k)) {
+        this->set(0x0C, 0x50, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0C) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x0C, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0C) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x0C, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0D) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x0D, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0D) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x0D, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0E) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x0E, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0E) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x0E, 0x53, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0F) + "_" + std::to_string(0x52);
+      if (j.contains(k)) {
+        this->set(0x0F, 0x52, j[k]);
+      }
+
+      k = "global_" + std::to_string(0x0F) + "_" + std::to_string(0x53);
+      if (j.contains(k)) {
+        this->set(0x0F, 0x53, j[k]);
+      }
+
       return true;
     }
   private:

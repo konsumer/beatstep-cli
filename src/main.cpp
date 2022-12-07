@@ -78,35 +78,35 @@ int main(int argc, char *argv[]) {
       c = BEATSTEP_COLORS_BLUE;
     }
     bs->color(0x70 + led, c);
-    std::cout << "OK\n";
+    std::cout << "OK" << std::endl;
   } else if (app.got_subcommand(subFw)) {
     bs->openPort(device - 1);
     std::vector<unsigned char> v = bs->version();
-    std::cout << (int)v[0] << '.' << (int)v[1] << '.' << (int)v[2] << '.' << (int)v[3] << '\n';
+    std::cout << (int)v[0] << '.' << (int)v[1] << '.' << (int)v[2] << '.' << (int)v[3] << std::endl;
   } else if (app.got_subcommand(subGet)) {
     bs->openPort(device - 1);
     int r = bs->get(pp, cc);
     if (intOut) {
-      std::cout << r << '\n';
+      std::cout << r << std::endl;
     } else {
-      std::cout << std::hex << "0x" << r << '\n';
+      std::cout << std::hex << "0x" << r << std::endl;
     }
   } else if (app.got_subcommand(subSet)) {
     bs->openPort(device - 1);
     bs->set(pp, cc, vv);
-    std::cout << "OK\n";
+    std::cout << "OK" << std::endl;
   } else if (app.got_subcommand(subLoad)) {
     bs->openPort(device - 1);
     n = bs->loadPreset(filename);
-    std::cout << "OK\n";
+    std::cout << "OK" << std::endl;
   } else if (app.got_subcommand(subSave)) {
     bs->openPort(device - 1);
     n = bs->savePreset(filename);
-    std::cout << "OK\n";
+    std::cout << "OK" << std::endl;
   } else if (app.got_subcommand(subUpdate)) {
     bs->openPort(device - 1);
     n = bs->updateFirmware(filename);
-    std::cout << "OK\n";
+    std::cout << "OK" << std::endl;
   }
 
   delete bs;
