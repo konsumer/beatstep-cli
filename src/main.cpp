@@ -29,9 +29,28 @@ int main(int argc, char *argv[]) {
 
   int led = 0;
   std::string color = "red";
-  auto subSeq = app.add_subcommand("color", "Change color of an LED");
-  subSeq->add_option("LED", led, "The led to change color")->required();
-  subSeq->add_option("COLOR", color, "The color to change it to (off, red, pink, blue)")->required();
+  auto subColor = app.add_subcommand("color", "Change color of an LED");
+  subColor->add_option("-d,--device", device, "The device to use (see list)");
+  subColor->add_option("LED", led, "The pad-number to change color")->required();
+  subColor->add_option("COLOR", color, "The color to change it to (off, red, pink, blue)")->required();
+
+  auto subFw = app.add_subcommand("fw", "Get the firmware version on the device");
+  subFw->add_option("-d,--device", device, "The device to use (see list)");
+
+  int pp;
+  int cc;
+  int vv;
+
+  auto subGet = app.add_subcommand("get", "Get a param-value");
+  subGet->add_option("-d,--device", device, "The device to use (see list)");
+  subGet->add_option("PROGRAM", pp, "The number of the program")->required();
+  subGet->add_option("CONTROL", cc, "The number of the control")->required();
+
+  auto subSet = app.add_subcommand("set", "Set a param-value");
+  subSet->add_option("-d,--device", device, "The device to use (see list)");
+  subSet->add_option("PROGRAM", pp, "The number of the program")->required();
+  subSet->add_option("CONTROL", cc, "The number of the control")->required();
+  subSet->add_option("VALUE", vv, "The number of the value to set")->required();
 
   CLI11_PARSE(app, argc, argv);
 
@@ -44,7 +63,7 @@ int main(int argc, char *argv[]) {
 
   bool n = true;
 
-  if (app.got_subcommand(subSeq)) {
+  if (app.got_subcommand(subColor)) {
     bs->openPort(device - 1);
     BeatstepColor c = BEATSTEP_COLORS_OFF;
     if (color == "red") {
@@ -57,15 +76,30 @@ int main(int argc, char *argv[]) {
       c = BEATSTEP_COLORS_BLUE;
     }
     bs->color(0x70 + led, c);
+    std::cout << "OK\n";
+  } else if (app.got_subcommand(subFw)) {
+    bs->openPort(device - 1);
+    std::vector<unsigned char> v = bs->version();
+    std::cout << (int)v[0] << '.' << (int)v[1] << '.' << (int)v[2] << '.' << (int)v[3] << '\n';
+  } else if (app.got_subcommand(subGet)) {
+    bs->openPort(device - 1);
+    std::cout << std::hex << "0x" << (int)bs->get(pp, cc) << '\n';
+  } else if (app.got_subcommand(subSet)) {
+    bs->openPort(device - 1);
+    bs->set(pp, cc, vv);
+    std::cout << "OK\n";
   } else if (app.got_subcommand(subLoad)) {
     bs->openPort(device - 1);
     n = bs->loadPreset(filename);
+    std::cout << "OK\n";
   } else if (app.got_subcommand(subSave)) {
     bs->openPort(device - 1);
     n = bs->savePreset(filename);
+    std::cout << "OK\n";
   } else if (app.got_subcommand(subUpdate)) {
     bs->openPort(device - 1);
     n = bs->updateFirmware(filename);
+    std::cout << "OK\n";
   }
 
   delete bs;

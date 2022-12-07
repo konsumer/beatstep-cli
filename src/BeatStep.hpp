@@ -142,7 +142,7 @@ class BeatStep {
     void set (unsigned char pp, unsigned char cc, unsigned char vv) {
       std::vector<unsigned char> message = {0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x02, 0x00, pp, cc, vv, 0xF7};
       this->midiout->sendMessage(&message);
-      SLEEP(100);
+      SLEEP(10);
     }
 
     // set the color of a pad's LED
@@ -161,15 +161,36 @@ class BeatStep {
     std::vector<unsigned char> version() {
       std::vector<unsigned char> message = { 0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7 };
       this->midiout->sendMessage(&message);
-      SLEEP(10);
+
+      SLEEP(1);
       message.clear();
       std::vector<unsigned char> version = {0,0,0,0};
+      
       this->midiin->getMessage(&message);
-      // TODO: check other bytes
-      version[0] = message[15];
-      version[1] = message[14];
-      version[2] = message[13];
-      version[3] = message[12];
+      int nBytes = message.size();
+
+      if (
+        nBytes == 17 &&
+        message[0] == 0xF0 &&
+        message[1] == 0x7E &&
+        message[2] == 0x00 &&
+        message[3] == 0x06 &&
+        message[4] == 0x02 &&
+        message[5] == 0x00 &&
+        message[6] == 0x20 &&
+        message[7] == 0x6B &&
+        message[8] == 0x02 &&
+        message[9] == 0x00 &&
+        message[10] == 0x06 &&
+        message[11] == 0x00 &&
+        message[16] == 0xF7
+      ) {
+        version[0] = message[15];
+        version[1] = message[14];
+        version[2] = message[13];
+        version[3] = message[12];
+      }
+      
       return version;
     }
 
@@ -177,20 +198,33 @@ class BeatStep {
     unsigned char get (unsigned char pp, unsigned char cc) {
       std::vector<unsigned char> message = { 0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x01, 0x00, pp, cc, 0xF7 };
       this->midiout->sendMessage(&message);
-      SLEEP(10);
-      message.clear();
-      unsigned char out = 0;
-      this->midiin->getMessage(&message);
-      
-      // TODO: check other bytes
-      return message[10];
+      int nBytes;
+      while (true) {
+        SLEEP(1);
+        message.clear();
+        this->midiin->getMessage(&message);
+        nBytes = message.size();
+        if (
+          nBytes == 12 &&
+          message[0] == 0xF0 &&
+          message[1] == 0x00 &&
+          message[2] == 0x20 &&
+          message[3] == 0x6B &&
+          message[4] == 0x7F &&
+          message[5] == 0x42 &&
+          message[6] == 0x02 &&
+          message[7] == 0x00 &&
+          message[8] == pp &&
+          message[9] == cc &&
+          message[11] == 0xF7
+        ) {
+          return message[10];
+        }
+      }
     }
 
     // save preset
-    bool savePreset (std::string filename){
-      std::vector<unsigned char> v = this->version();
-      std::cout << (int)v[0] << '.' << (int)v[1] << '.' << (int)v[2] << '.' << (int)v[3] << '\n';
-
+    bool savePreset (std::string filename) {
       unsigned char s;
 
       // TODO: do this in a loop
