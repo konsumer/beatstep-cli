@@ -150,7 +150,7 @@ class BeatStep {
 
     // set the color of a pad's LED
     void color (unsigned char pad, BeatstepColor color) {
-      this->set(0x10, pad, color);
+      this->set(pad, 0x10, color);
     }
 
     // update firmware
