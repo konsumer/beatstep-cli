@@ -89,16 +89,6 @@ enum BeatstepControllerBehavior {
   BEATSTEP_CONTROLLER_BEHAVIORS_GATE
 };
 
-void _midicallback(double deltatime, std::vector< unsigned char > *message, void *userData) {
-  unsigned int nBytes = message->size();
-  for ( unsigned int i=0; i<nBytes; i++ ){
-    std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
-  }
-  if ( nBytes > 0 ){
-    std::cout << "stamp = " << deltatime << std::endl;
-  }
-}
-
 class BeatStep {
   public:
     BeatStep () {
@@ -107,7 +97,6 @@ class BeatStep {
         this->midiin = new RtMidiIn();
         // Don't ignore sysex messages.
         this->midiin->ignoreTypes(false, true, true);
-        this->midiin->setCallback(&_midicallback);
       } catch ( RtMidiError &error ) {
         error.printMessage();
         exit( EXIT_FAILURE );
@@ -156,29 +145,6 @@ class BeatStep {
       SLEEP(100);
     }
 
-    unsigned char get (unsigned char pp, unsigned char cc) {
-      std::vector<unsigned char> message = {0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x01, 0x00, pp, cc, 0xF7};
-      this->midiout->sendMessage(&message);
-
-      int nBytes, i;
-      double stamp;
-      
-      std::cout << "Reading MIDI from port ... quit with Ctrl-C.\n";
-      while ( !done ) {
-        stamp = midiin->getMessage( &message );
-        nBytes = message.size();
-        for ( i=0; i<nBytes; i++ )
-          std::cout << "Byte " << i << " = " << (int)message[i] << ", ";
-        if ( nBytes > 0 )
-          std::cout << "stamp = " << stamp << std::endl;
-        SLEEP( 10 );
-      }
-
-
-      // TODO: process response
-      return 0;
-    }
-
     // set the color of a pad's LED
     void color (unsigned char pad, BeatstepColor color) {
       this->set(0x10, pad, color);
@@ -191,25 +157,814 @@ class BeatStep {
       return true;
     }
 
+    // get the firmware version on the device
+    std::vector<unsigned char> version() {
+      std::vector<unsigned char> message = { 0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7 };
+      this->midiout->sendMessage(&message);
+      SLEEP(10);
+      message.clear();
+      std::vector<unsigned char> version = {0,0,0,0};
+      this->midiin->getMessage(&message);
+      // TODO: check other bytes
+      version[0] = message[15];
+      version[1] = message[14];
+      version[2] = message[13];
+      version[3] = message[12];
+      return version;
+    }
+
+    // get a setting
+    unsigned char get (unsigned char pp, unsigned char cc) {
+      std::vector<unsigned char> message = { 0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x01, 0x00, pp, cc, 0xF7 };
+      this->midiout->sendMessage(&message);
+      SLEEP(10);
+      message.clear();
+      unsigned char out = 0;
+      this->midiin->getMessage(&message);
+      
+      // TODO: check other bytes
+      return message[10];
+    }
+
     // save preset
     bool savePreset (std::string filename){
-      std::vector<unsigned char> message = { 0xF0, 0x7E, 0x00, 0x06, 0x02, 0x00, 0x20, 0x6B, 0x02, 0x00, 0x06, 0x00, 0x03, 0x00, 0x02, 0x01, 0xF7 };
-      this->midiout->sendMessage(&message);
-      this->midiout->sendMessage(&message);
+      std::vector<unsigned char> v = this->version();
+      std::cout << (int)v[0] << '.' << (int)v[1] << '.' << (int)v[2] << '.' << (int)v[3] << '\n';
 
-      message = { 0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x02, 0x00, 0x52, 0x00, 0x3C, 0xF7 };
-      this->midiout->sendMessage(&message);
+      unsigned char s;
 
-      unsigned char v = this->get(112, 1);
-      v = this->get(112, 2);
-      v = this->get(112, 3);
-      v = this->get(112, 4);
+      // TODO: do this in a loop
 
-      // TODO: read current buffer
+      s = this->get(0x52, 0x00);
+      std::cout << (int)s << '\n';
 
-      std::cout << "\nReading MIDI input ... press <enter> to quit.\n";
-      char input;
-      std::cin.get(input);
+      s = this->get(0x53, 0x00);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x0A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x0A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x0A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x70);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x70);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x70);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x70);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x70);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x70);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x71);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x71);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x71);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x71);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x71);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x71);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x72);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x72);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x72);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x72);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x72);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x72);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x73);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x73);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x73);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x73);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x73);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x73);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x74);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x74);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x74);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x74);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x74);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x74);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x75);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x75);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x75);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x75);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x75);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x75);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x76);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x76);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x76);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x76);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x76);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x76);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x77);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x77);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x77);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x77);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x77);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x77);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x0B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x0B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x0B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x78);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x78);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x78);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x78);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x78);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x78);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x79);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x79);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x79);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x79);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x79);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x79);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x7A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x7A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x7A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x7A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x7A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x7A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x7B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x7B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x7B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x7B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x7B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x7B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x7C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x7C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x7C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x7C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x7C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x7C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x7D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x7D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x7D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x7D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x7D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x7D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x7E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x7E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x7E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x7E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x7E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x7E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x7F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x7F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x7F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x7F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x7F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x7F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x0C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x0C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x0C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x0D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x0D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x0E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x0E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x0F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x0F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x01);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x01);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x01);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x02);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x02);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x02);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x20);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x20);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x20);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x20);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x20);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x20);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x21);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x21);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x21);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x21);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x21);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x21);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x22);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x22);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x22);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x22);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x22);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x22);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x23);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x23);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x23);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x23);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x23);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x23);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x24);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x24);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x24);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x24);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x24);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x24);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x25);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x25);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x25);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x25);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x25);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x25);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x26);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x26);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x26);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x26);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x26);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x26);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x27);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x27);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x27);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x27);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x27);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x27);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x41, 0x03);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x03);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x03);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x03);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x28);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x28);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x28);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x28);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x28);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x28);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x29);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x29);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x29);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x29);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x29);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x29);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x2A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x2A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x2A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x2A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x2A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x2A);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x2B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x2B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x2B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x2B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x2B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x2B);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x2C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x2C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x2C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x2C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x2C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x2C);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x2D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x2D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x2D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x2D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x2D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x2D);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x2E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x2E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x2E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x2E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x2E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x2E);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x2F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x2F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x2F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x2F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x2F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x2F);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x30);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x30);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x30);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x30);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x30);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x30);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x41, 0x04);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x04);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x04);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x04);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x05);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x05);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x05);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x40, 0x06);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x06);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x06);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x06);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x07);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x07);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x07);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x58);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x58);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x58);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x58);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x58);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x58);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x01, 0x59);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x02, 0x59);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x03, 0x59);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x04, 0x59);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x05, 0x59);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x06, 0x59);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x08);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x08);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x08);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x50, 0x09);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x52, 0x09);
+      std::cout << (int)s << '\n';
+
+      s = this->get(0x53, 0x09);
+      std::cout << (int)s << '\n';
 
       return true;
     }
