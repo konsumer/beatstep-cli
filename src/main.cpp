@@ -40,9 +40,11 @@ int main(int argc, char *argv[]) {
   int pp;
   int cc;
   int vv;
+  bool intOut = false;
 
   auto subGet = app.add_subcommand("get", "Get a param-value");
   subGet->add_option("-d,--device", device, "The device to use (see list)");
+  subGet->add_flag("-i,--int", intOut, "Output decimal value, instead of hex");
   subGet->add_option("PROGRAM", pp, "The number of the program")->required();
   subGet->add_option("CONTROL", cc, "The number of the control")->required();
 
@@ -83,7 +85,12 @@ int main(int argc, char *argv[]) {
     std::cout << (int)v[0] << '.' << (int)v[1] << '.' << (int)v[2] << '.' << (int)v[3] << '\n';
   } else if (app.got_subcommand(subGet)) {
     bs->openPort(device - 1);
-    std::cout << std::hex << "0x" << (int)bs->get(pp, cc) << '\n';
+    int r = bs->get(pp, cc);
+    if (intOut) {
+      std::cout << r << '\n';
+    } else {
+      std::cout << std::hex << "0x" << r << '\n';
+    }
   } else if (app.got_subcommand(subSet)) {
     bs->openPort(device - 1);
     bs->set(pp, cc, vv);
