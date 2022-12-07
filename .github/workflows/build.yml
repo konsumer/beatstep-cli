@@ -1,0 +1,16 @@
+name: Build
+
+on:
+  push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - run: cmake -B rtmidi/build rtmidi
+      - run: cmake --build rtmidi/build
+      - run: cmake -B build
+      - run: cmake --build build
