@@ -43,24 +43,24 @@ jobs:
           asset_name: beatstep-linux_amd64.zip
           asset_content_type: application/zip
 
-  windows_amd64:
-    runs-on: windows-latest
-    needs: create_release
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - run: cmake -B rtmidi/build rtmidi && cmake --build rtmidi/build && cmake -B build && cmake --build build
-      - run: cd build && zip -r beatstep-windows_amd64.zip beatstep
-      - name: upload linux artifact
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ./build/beatstep-windows_amd64.zip
-          asset_name: beatstep-windows_amd64.zip
-          asset_content_type: application/zip
+  # windows_amd64:
+  #   runs-on: windows-latest
+  #   needs: create_release
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: true
+  #     - run: cmake -B rtmidi/build rtmidi && cmake --build rtmidi/build && cmake -B build && cmake --build build
+  #     - run: cd build && zip -r beatstep-windows_amd64.zip beatstep
+  #     - name: upload linux artifact
+  #       uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ github.token }}
+  #       with:
+  #         upload_url: ${{ needs.create_release.outputs.upload_url }}
+  #         asset_path: ./build/beatstep-windows_amd64.zip
+  #         asset_name: beatstep-windows_amd64.zip
+  #         asset_content_type: application/zip
 
   macos:
     runs-on: macos-latest

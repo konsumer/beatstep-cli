@@ -170,7 +170,7 @@ class BeatStep {
       std::vector<unsigned char> version = {0,0,0,0};
       
       this->midiin->getMessage(&message);
-      int nBytes = message.size();
+      size_t nBytes = message.size();
 
       if (
         nBytes == 17 &&
@@ -201,7 +201,7 @@ class BeatStep {
     unsigned char get (unsigned char cc, unsigned char pp) {
       std::vector<unsigned char> message = { 0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x01, 0x00, pp, cc, 0xF7 };
       this->midiout->sendMessage(&message);
-      int nBytes;
+      size_t nBytes;
       int tryCount = 0;
       while (true) {
         tryCount++;
