@@ -23,9 +23,9 @@ int main(int argc, char *argv[]) {
   subSave->add_option("-d,--device", device, "The device to use (see list)");
   subSave->add_option("FILE", filename, "The .beatstep file")->required();
 
-  auto subUpdate = app.add_subcommand("update", "Install a .led firmware file on device");
-  subUpdate->add_option("-d,--device", device, "The device to use (see list)");
-  subUpdate->add_option("FILE", filename, "The .led file")->required();
+  // auto subUpdate = app.add_subcommand("update", "Install a .led firmware file on device");
+  // subUpdate->add_option("-d,--device", device, "The device to use (see list)");
+  // subUpdate->add_option("FILE", filename, "The .led file")->required();
 
   int led = 0;
   std::string color = "red";
@@ -103,11 +103,13 @@ int main(int argc, char *argv[]) {
     bs->openPort(device - 1);
     n = bs->savePreset(filename);
     std::cout << "OK" << std::endl;
-  } else if (app.got_subcommand(subUpdate)) {
+  } /*
+  else if (app.got_subcommand(subUpdate)) {
     bs->openPort(device - 1);
     n = bs->updateFirmware(filename);
     std::cout << "OK" << std::endl;
   }
+  */
 
   delete bs;
   return n ? 0 : 1;
