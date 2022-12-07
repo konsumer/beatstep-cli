@@ -145,7 +145,7 @@ class BeatStep {
     void set (unsigned char pp, unsigned char cc, unsigned char vv) {
       std::vector<unsigned char> message = {0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x02, 0x00, pp, cc, vv, 0xF7};
       this->midiout->sendMessage(&message);
-      SLEEP(10);
+      SLEEP(1);
     }
 
     // set the color of a pad's LED
@@ -165,7 +165,7 @@ class BeatStep {
       std::vector<unsigned char> message = { 0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7 };
       this->midiout->sendMessage(&message);
 
-      SLEEP(10);
+      SLEEP(1);
       message.clear();
       std::vector<unsigned char> version = {0,0,0,0};
       
@@ -198,14 +198,14 @@ class BeatStep {
     }
 
     // get a setting
-    unsigned char get (unsigned char pp, unsigned char cc) {
+    unsigned char get (unsigned char cc, unsigned char pp) {
       std::vector<unsigned char> message = { 0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x01, 0x00, pp, cc, 0xF7 };
       this->midiout->sendMessage(&message);
       int nBytes;
       int tryCount = 0;
       while (true) {
         tryCount++;
-        SLEEP(10);
+        SLEEP(1);
         message.clear();
         this->midiin->getMessage(&message);
         nBytes = message.size();
@@ -223,28 +223,94 @@ class BeatStep {
           message[9] == cc &&
           message[11] == 0xF7
         ) {
+          // std::cout << (int)cc << '_' << (int)pp << '=' << (int)message[10] << '\n';
           return message[10];
         }
         if (tryCount > 10) {
-          throw std::invalid_argument("No response.");
+          throw std::invalid_argument("No response: " + std::to_string(cc) + ":" + std::to_string(pp));
         }
       }
     }
 
     // save preset
     bool savePreset (std::string filename) {
-      unsigned char cc;
-      unsigned char pp;
-      std::cout << '\n';
-      for (cc = 96; cc < 154; cc++) {
-        for (pp = 1; pp < 7; pp++) {
-          std::cout << std::hex
-            << "0x" << (int)cc << ' '
-            << "0x" << (int)pp << ' '
-            << "0x" << (int)this->get(pp, cc)
-            << '\n';
+      unsigned char cc = 0x20;
+      unsigned char pp = 0x01;
+
+      json out = {
+        { "device", "BeatStep" }
+      };
+      
+      for (cc = 0x20; cc < 0x31; cc++) {
+        for (pp = 0x01; pp < 0x07; pp++) {
+          out[std::to_string(cc) + "_" + std::to_string(pp)] = this->get(cc, pp);
         }
       }
+
+      for (cc = 0x58; cc < 0x60; cc++) {
+        for (pp = 0x01; pp < 0x07; pp++) {
+          out[std::to_string(cc) + "_" + std::to_string(pp)] = this->get(cc, pp);
+        }
+      }
+
+      for (cc = 0x70; cc < 0x80; cc++) {
+        for (pp = 0x01; pp < 0x07; pp++) {
+          out[std::to_string(cc) + "_" + std::to_string(pp)] = this->get(cc, pp);
+        }
+      }
+
+      // TODO: this would be nicer in a loop
+      out["global_" + std::to_string(0x00) + "_" + std::to_string(0x52)] = this->get(0x00, 0x52);
+      out["global_" + std::to_string(0x00) + "_" + std::to_string(0x53)] = this->get(0x00, 0x53);
+      out["global_" + std::to_string(0x01) + "_" + std::to_string(0x50)] = this->get(0x01, 0x50);
+      out["global_" + std::to_string(0x01) + "_" + std::to_string(0x52)] = this->get(0x01, 0x52);
+      out["global_" + std::to_string(0x01) + "_" + std::to_string(0x53)] = this->get(0x01, 0x53);
+      out["global_" + std::to_string(0x02) + "_" + std::to_string(0x50)] = this->get(0x02, 0x50);
+      out["global_" + std::to_string(0x02) + "_" + std::to_string(0x52)] = this->get(0x02, 0x52);
+      out["global_" + std::to_string(0x02) + "_" + std::to_string(0x53)] = this->get(0x02, 0x53);
+      out["global_" + std::to_string(0x03) + "_" + std::to_string(0x41)] = this->get(0x03, 0x41);
+      out["global_" + std::to_string(0x03) + "_" + std::to_string(0x50)] = this->get(0x03, 0x50);
+      out["global_" + std::to_string(0x03) + "_" + std::to_string(0x52)] = this->get(0x03, 0x52);
+      out["global_" + std::to_string(0x03) + "_" + std::to_string(0x53)] = this->get(0x03, 0x53);
+      out["global_" + std::to_string(0x04) + "_" + std::to_string(0x41)] = this->get(0x04, 0x41);
+      out["global_" + std::to_string(0x04) + "_" + std::to_string(0x50)] = this->get(0x04, 0x50);
+      out["global_" + std::to_string(0x04) + "_" + std::to_string(0x52)] = this->get(0x04, 0x52);
+      out["global_" + std::to_string(0x04) + "_" + std::to_string(0x53)] = this->get(0x04, 0x53);
+      out["global_" + std::to_string(0x05) + "_" + std::to_string(0x50)] = this->get(0x05, 0x50);
+      out["global_" + std::to_string(0x05) + "_" + std::to_string(0x52)] = this->get(0x05, 0x52);
+      out["global_" + std::to_string(0x05) + "_" + std::to_string(0x53)] = this->get(0x05, 0x53);
+      out["global_" + std::to_string(0x06) + "_" + std::to_string(0x40)] = this->get(0x06, 0x40);
+      out["global_" + std::to_string(0x06) + "_" + std::to_string(0x50)] = this->get(0x06, 0x50);
+      out["global_" + std::to_string(0x06) + "_" + std::to_string(0x52)] = this->get(0x06, 0x52);
+      out["global_" + std::to_string(0x06) + "_" + std::to_string(0x53)] = this->get(0x06, 0x53);
+      out["global_" + std::to_string(0x07) + "_" + std::to_string(0x50)] = this->get(0x07, 0x50);
+      out["global_" + std::to_string(0x07) + "_" + std::to_string(0x52)] = this->get(0x07, 0x52);
+      out["global_" + std::to_string(0x07) + "_" + std::to_string(0x53)] = this->get(0x07, 0x53);
+      out["global_" + std::to_string(0x08) + "_" + std::to_string(0x50)] = this->get(0x08, 0x50);
+      out["global_" + std::to_string(0x08) + "_" + std::to_string(0x52)] = this->get(0x08, 0x52);
+      out["global_" + std::to_string(0x08) + "_" + std::to_string(0x53)] = this->get(0x08, 0x53);
+      out["global_" + std::to_string(0x09) + "_" + std::to_string(0x50)] = this->get(0x09, 0x50);
+      out["global_" + std::to_string(0x09) + "_" + std::to_string(0x52)] = this->get(0x09, 0x52);
+      out["global_" + std::to_string(0x09) + "_" + std::to_string(0x53)] = this->get(0x09, 0x53);
+      out["global_" + std::to_string(0x0A) + "_" + std::to_string(0x50)] = this->get(0x0A, 0x50);
+      out["global_" + std::to_string(0x0A) + "_" + std::to_string(0x52)] = this->get(0x0A, 0x52);
+      out["global_" + std::to_string(0x0A) + "_" + std::to_string(0x53)] = this->get(0x0A, 0x53);
+      out["global_" + std::to_string(0x0B) + "_" + std::to_string(0x50)] = this->get(0x0B, 0x50);
+      out["global_" + std::to_string(0x0B) + "_" + std::to_string(0x52)] = this->get(0x0B, 0x52);
+      out["global_" + std::to_string(0x0B) + "_" + std::to_string(0x53)] = this->get(0x0B, 0x53);
+      out["global_" + std::to_string(0x0C) + "_" + std::to_string(0x50)] = this->get(0x0C, 0x50);
+      out["global_" + std::to_string(0x0C) + "_" + std::to_string(0x52)] = this->get(0x0C, 0x52);
+      out["global_" + std::to_string(0x0C) + "_" + std::to_string(0x53)] = this->get(0x0C, 0x53);
+      out["global_" + std::to_string(0x0D) + "_" + std::to_string(0x52)] = this->get(0x0D, 0x52);
+      out["global_" + std::to_string(0x0D) + "_" + std::to_string(0x53)] = this->get(0x0D, 0x53);
+      out["global_" + std::to_string(0x0E) + "_" + std::to_string(0x52)] = this->get(0x0E, 0x52);
+      out["global_" + std::to_string(0x0E) + "_" + std::to_string(0x53)] = this->get(0x0E, 0x53);
+      out["global_" + std::to_string(0x0F) + "_" + std::to_string(0x52)] = this->get(0x0F, 0x52);
+      out["global_" + std::to_string(0x0F) + "_" + std::to_string(0x53)] = this->get(0x0F, 0x53);
+
+      std::ofstream o(filename);
+      o << std::setw(2) << out << std::endl;
+
       return true;
     }
 
