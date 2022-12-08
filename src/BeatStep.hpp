@@ -157,6 +157,9 @@ class BeatStep {
     bool updateFirmware (std::string filename){
       std::ifstream input(filename, std::ios::binary);
       std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(input), {});
+
+      // TODO: no iddea how to turn led into sysex, can't seem to capture it either
+
       return true;
     }
 
@@ -193,7 +196,7 @@ class BeatStep {
         version[2] = message[13];
         version[3] = message[12];
       }
-      
+
       return version;
     }
 
@@ -588,6 +591,17 @@ class BeatStep {
       }
 
       return true;
+    }
+
+    // enter update mode (requires unplug/replug)
+    void updateMode() {
+      /*
+      Out:  F0  5A  57  6E  28  3C  4E  3C  F7  |  Sysex
+       In:  F0  15  F7  |  Sysex
+      */
+      std::vector<unsigned char> message = {0xF0, 0x5A, 0x57, 0x6E, 0x28, 0x3C, 0x4E, 0x3C, 0xF7};
+      this->midiout->sendMessage(&message);
+      SLEEP(1);
     }
   private:
     RtMidiOut *midiout;

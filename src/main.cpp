@@ -103,10 +103,16 @@ int main(int argc, char *argv[]) {
     bs->openPort(device - 1);
     n = bs->savePreset(filename);
     std::cout << "OK" << std::endl;
-  } /*
+  }
+  /*
   else if (app.got_subcommand(subUpdate)) {
+    
     bs->openPort(device - 1);
-    n = bs->updateFirmware(filename);
+    // TODO: get firmware version as a way to check it's in normal-mode before entering update-modde
+    bs->updateMode();
+    std::cout << "Your keyboard needs to be unplugged and plugged back in." << std::endl << "The lights will change." << std::endl << std::endl << "Press ENTER once you have done this." << std::endl;
+    std::cin.get();
+    bs->updateFirmware(filename);
     std::cout << "OK" << std::endl;
   }
   */
