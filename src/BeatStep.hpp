@@ -603,6 +603,26 @@ class BeatStep {
       this->midiout->sendMessage(&message);
       SLEEP(1);
     }
+
+    // set the mode of the control
+    void mode (unsigned char control, BeatstepControllerMode mode) {
+      this->set(0x01, control, mode);
+    }
+
+    // set the channel a note-control sends
+    void noteChannel (unsigned char control, unsigned char channel) {
+      this->set(0x02, control, channel);
+    }
+
+    // set the note a note-control sends
+    void note (unsigned char control, unsigned char note) {
+      this->set(0x03, control, note);
+    }
+
+    // set the mode (toggle/gate) for a control
+    void noteMode (unsigned char control, BeatstepControllerBehavior mode) {
+      this->set(0x06, control, mode);
+    }
   private:
     RtMidiOut *midiout;
     RtMidiIn *midiin;
