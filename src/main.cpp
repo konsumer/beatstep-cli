@@ -6,6 +6,16 @@
 #include "CLI/Formatter.hpp"
 #include "CLI/Config.hpp"
 
+BeatStep* bs;
+
+void emulate_callback (double deltatime, std::vector< unsigned char > *message, void *userData) {
+  unsigned int nBytes = message->size();
+  for ( unsigned int i=0; i<nBytes; i++ )
+    std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+  if ( nBytes > 0 )
+    std::cout << "stamp = " << deltatime << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   CLI::App app{"Use sysex to control BeatStep"};
   app.require_subcommand();
@@ -54,9 +64,12 @@ int main(int argc, char *argv[]) {
   subSet->add_option("CONTROL", cc, "The number of the control")->required();
   subSet->add_option("VALUE", vv, "The number of the value to set")->required();
 
+  auto subEmu = app.add_subcommand("emulate", "Emulate a beatstep (for debugging)");
+
+
   CLI11_PARSE(app, argc, argv);
 
-  BeatStep* bs = new BeatStep();
+  bs = new BeatStep();
 
   if (app.got_subcommand(subList)) {
     bs->list();
@@ -103,6 +116,13 @@ int main(int argc, char *argv[]) {
     bs->openPort(device - 1);
     n = bs->savePreset(filename);
     std::cout << "OK" << std::endl;
+  } else if (app.got_subcommand(subEmu)) {
+    bs->midiout->openVirtualPort ("Arturia BeatStep");
+    bs->midiin->openVirtualPort("Arturia BeatStep");
+    bs->midiin->setCallback(&emulate_callback);
+
+    std::cout << "A virtual device has been created. Press ENTER to stop." << std::endl;
+    std::cin.get();
   }
   /*
   else if (app.got_subcommand(subUpdate)) {

@@ -98,8 +98,6 @@ class BeatStep {
       try {
         this->midiout = new RtMidiOut();
         this->midiin = new RtMidiIn();
-        // Don't ignore sysex messages.
-        this->midiin->ignoreTypes(false, true, true);
       } catch ( RtMidiError &error ) {
         error.printMessage();
         exit( EXIT_FAILURE );
@@ -139,6 +137,7 @@ class BeatStep {
     void openPort(int device) {
       this->midiout->openPort(device);
       this->midiin->openPort(device);
+      this->midiin->ignoreTypes(false, false, false);
     }
 
     // set a beatstep param
@@ -623,7 +622,7 @@ class BeatStep {
     void noteMode (unsigned char control, BeatstepControllerBehavior mode) {
       this->set(0x06, control, mode);
     }
-  private:
+    
     RtMidiOut *midiout;
     RtMidiIn *midiin;
 };
