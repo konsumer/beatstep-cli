@@ -23,14 +23,14 @@ int main(int argc, char *argv[]) {
   int device = 1;
   std::string filename;
 
+  app.add_option("-d,--device", device, "The device to use (see list)");
+
   auto subList = app.add_subcommand("list", "List available MIDI devices");
   
   auto subLoad = app.add_subcommand("load", "Load a .beatstep preset file on device");
-  subLoad->add_option("-d,--device", device, "The device to use (see list)");
   subLoad->add_option("FILE", filename, "The .beatstep file")->required();
 
   auto subSave = app.add_subcommand("save", "Save a .beatstep preset file from device");
-  subSave->add_option("-d,--device", device, "The device to use (see list)");
   subSave->add_option("FILE", filename, "The .beatstep file")->required();
 
   // auto subUpdate = app.add_subcommand("update", "Install a .led firmware file on device");
@@ -40,12 +40,10 @@ int main(int argc, char *argv[]) {
   int led = 0;
   std::string color = "red";
   auto subColor = app.add_subcommand("color", "Change color of an LED");
-  subColor->add_option("-d,--device", device, "The device to use (see list)");
   subColor->add_option("LED", led, "The pad-number to change color")->required();
   subColor->add_option("COLOR", color, "The color to change it to (off, red, pink, blue)")->required();
 
   auto subFw = app.add_subcommand("fw", "Get the firmware version on the device");
-  subFw->add_option("-d,--device", device, "The device to use (see list)");
 
   int pp;
   int cc;
@@ -53,13 +51,11 @@ int main(int argc, char *argv[]) {
   bool intOut = false;
 
   auto subGet = app.add_subcommand("get", "Get a param-value");
-  subGet->add_option("-d,--device", device, "The device to use (see list)");
   subGet->add_flag("-i,--int", intOut, "Output decimal value, instead of hex");
   subGet->add_option("PROGRAM", pp, "The number of the program")->required();
   subGet->add_option("CONTROL", cc, "The number of the control")->required();
 
   auto subSet = app.add_subcommand("set", "Set a param-value");
-  subSet->add_option("-d,--device", device, "The device to use (see list)");
   subSet->add_option("PROGRAM", pp, "The number of the program")->required();
   subSet->add_option("CONTROL", cc, "The number of the control")->required();
   subSet->add_option("VALUE", vv, "The number of the value to set")->required();
